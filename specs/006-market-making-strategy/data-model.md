@@ -86,10 +86,16 @@ Pure function output for one feed event + config + current QuoteSet.
 | `NewBid` / `NewAsk` | optional limit intents | Price, size, new order id |
 
 **Rules** (deterministic):
+- `Enabled=false` → `hold` (no new submits; cancels only on shutdown if already quoting)
 - No valid reference → `hold` or `pause` (no submit)
 - First valid reference and empty quote set → `quote_initial`
 - Valid reference with `|L − CenteredOn| ≥ MovementThreshold` → `requote`
 - Sub-threshold trade → `hold`
+- Last-trade event attributable only to a fill against a strategy-owned resting
+  order (trade’s resting/aggressor id intersects current OwnedOrder set) →
+  `hold` for requote purposes even if `|L − CenteredOn| ≥ MovementThreshold`
+  (FR-013). Update fill/owned status from the event as needed, but do not
+  emit cancel/replace solely because of that trade.
 - Shutdown → `shutdown_cancel` then stop
 
 ---

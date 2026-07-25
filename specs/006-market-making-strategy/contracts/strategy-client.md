@@ -21,7 +21,10 @@ TradeEvent {
   symbol:      string
   price:       int      // last-trade reference candidate
   quantity:    int
-  // correlatable side ids as defined by Spec 5 — opaque to strategy logic
+  // Minimal correlatable ids for Spec 6 own-fill attribution (FR-013).
+  // Align names with Spec 5 when it lands; until then, fixtures MUST populate:
+  resting_order_id:   OrderID | null   // maker/resting side if known
+  aggressor_order_id: OrderID | null   // taker/aggressor side if known
 }
 
 BookDepthEvent {
@@ -35,6 +38,11 @@ BookDepthEvent {
 
 **Subscription**: Strategy registers as a Spec 5 consumer for `symbol`. It MUST
 NOT call into book APIs.
+
+**Own-fill rule for consumers**: A trade is an *own fill* for the strategy iff
+`resting_order_id` or `aggressor_order_id` equals an id in the strategy’s
+current OwnedOrder set. Spec 6 tests (T021/T026) MUST set these fields
+explicitly in fixtures.
 
 ---
 
@@ -112,6 +120,10 @@ Decision {
 
 **Guarantees**: Same `(config, state, event sequence)` ⇒ same decision
 sequence (FR-C02).
+
+**Own-fill**: If the trade event’s correlatable order id(s) match a currently
+owned strategy order, `action` MUST be `hold` (not `requote`), regardless of
+movement magnitude (FR-013).
 
 ---
 

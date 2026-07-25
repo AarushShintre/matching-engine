@@ -96,11 +96,17 @@ internal/
 ├── ingest/                  # Spec 2 — single-writer ingress (dependency)
 ├── marketdata/              # Spec 5 — events + consumers (dependency)
 └── strategy/                # Spec 6 — config, decision, run loop
+    ├── doc.go               # Principle VI package framing
     ├── config.go
-    ├── decision.go
-    ├── quotes.go
-    └── runner.go
-# tests live as *_test.go beside packages (Go convention)
+    ├── types.go             # Decision, QuoteSet, ReferencePrice, OwnedOrder
+    ├── deps.go              # Ingress + market-data consumer interfaces only
+    ├── ids.go               # Strategy order-id namespace generator
+    ├── quotes.go            # Fixed + dynamic half-spread
+    ├── decision.go          # Pure Decide (incl. FR-013 own-fill hold)
+    ├── ownership.go         # Optional: own-fill helpers (may live in decision.go)
+    ├── status.go            # Optional: StrategyStatus / FeedbackLoopEvidence hooks
+    └── runner.go            # Event loop, ingress submit/cancel, shutdown
+# tests: *_test.go beside package (fakerecorder, fakefeed, decision, loop, …)
 ```
 
 **Structure Decision**: Single Go module at repo root with `internal/` packages

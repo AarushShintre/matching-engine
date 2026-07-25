@@ -43,6 +43,7 @@
 - [ ] T006 [P] Define Spec 2 ingress client interface (`SubmitNewLimit`, `SubmitCancel`) and Spec 5 trade/book event consumer types used by the strategy in `internal/strategy/deps.go` (no book mutation APIs; FR-005, FR-C01)
 - [ ] T007 Implement strategy order-ID generator with reserved namespace in `internal/strategy/ids.go` (FR-007; research R5)
 - [ ] T008 [P] Implement `IngressRecorder` fake in `internal/strategy/fakerecorder_test.go` (or `internal/strategy/testing.go` + tests) per `contracts/strategy-client.md` §6 for SC-003 accounting
+- [ ] T008a [P] Add minimal fake Spec 5 trade (and optional book-depth) event source in `internal/strategy/fakefeed_test.go` sufficient for decision/loop tests without `internal/marketdata` (supports SC-004 / T030)
 - [ ] T009 [P] Add config validation unit tests in `internal/strategy/config_test.go` covering invalid half-spread, inverted dynamic bounds, and zero quote size
 
 **Checkpoint**: Foundation ready — user story implementation can now begin
@@ -61,12 +62,14 @@
 
 - [ ] T010 [P] [US1] Add `TestInitialQuotesFixedSpread` in `internal/strategy/decision_test.go` (or `quotes_test.go`) asserting bid `L−S` / ask `L+S` / size `Q` for fixed mode (SC-001; quickstart Scenario A; run with `-count=10`)
 - [ ] T011 [P] [US1] Add `TestNoQuotesWithoutReference` in `internal/strategy/decision_test.go` asserting hold/no ingress when no last trade and no seed (spec US1 acceptance #2)
+- [ ] T011a [P] [US1] Add `TestDisabledConfigNoQuotes` in `internal/strategy/decision_test.go` asserting `Enabled=false` yields `hold` and zero ingress submits even when a valid last-trade/seed reference exists (data-model StrategyConfiguration)
 - [ ] T012 [P] [US1] Add `TestSeedReferenceUntilFirstTrade` in `internal/strategy/decision_test.go` asserting seed used only until first trade then last-trade takes over (FR-002)
 
 ### Implementation for User Story 1
 
 - [ ] T013 [P] [US1] Implement fixed half-spread quote price computation in `internal/strategy/quotes.go` (`Bid = L−S`, `Ask = L+S`, size `Q`; FR-003)
 - [ ] T014 [US1] Implement pure `Decide` for `quote_initial` / `hold` / `pause` paths in `internal/strategy/decision.go` given `(config, state, event)` (contracts §4; FR-C02)
+- [ ] T014a [US1] Honor `Enabled=false` in `Decide` / runner startup in `internal/strategy/decision.go` and `internal/strategy/runner.go` (no quote_initial/requote while disabled)
 - [ ] T015 [US1] Implement run-loop skeleton in `internal/strategy/runner.go`: consume Spec 5 trade events for one symbol, apply `Decide`, submit new limits only via ingress interface (FR-001, FR-005, FR-C01, FR-C06)
 - [ ] T016 [US1] Wire owned-order tracking into `QuoteSet` after successful initial submit in `internal/strategy/runner.go` / `internal/strategy/quotes.go` (FR-007)
 - [ ] T017 [US1] Add structured status/log hooks for feed → decision → ingress on initial quote in `internal/strategy/runner.go` (or `internal/strategy/status.go`) (FR-009)
@@ -94,7 +97,7 @@
 
 - [ ] T024 [P] [US2] Implement dynamic half-spread computation in `internal/strategy/quotes.go` using activity window over trade events (research R3; FR-004)
 - [ ] T025 [US2] Extend `Decide` in `internal/strategy/decision.go` for `requote` vs `hold` using movement threshold and centered-on reference (FR-006)
-- [ ] T026 [US2] Implement own-fill attribution in `internal/strategy/decision.go` (or `internal/strategy/ownership.go`): classify last trades against owned-order set so own fills never alone trigger requote (FR-013)
+- [ ] T026 [US2] Implement own-fill attribution in `internal/strategy/decision.go` (or `internal/strategy/ownership.go`): treat a trade as own-fill when `resting_order_id` or `aggressor_order_id` intersects the owned-order set; such trades MUST yield `hold` for requote (FR-013; contracts §1)
 - [ ] T027 [US2] Implement cancel-then-replace protocol in `internal/strategy/runner.go`: Spec 2 cancels for owned ids, new IDs, fresh bid/ask submits; tolerate cancel-after-fill (research R4; FR-007)
 - [ ] T028 [US2] On ingress reject/duplicate, log and retry with new order id on next quote cycle in `internal/strategy/runner.go` (edge case; no direct book write)
 - [ ] T029 [US2] Confirm US2 deterministic tests pass including own-fill and dynamic-spread cases (SC-002, FR-C02)
@@ -111,7 +114,7 @@
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T030 [P] [US3] Add `TestFeedbackLoop` in `internal/strategy/loop_test.go` (or integration harness) asserting feed → decision → ingress → follow-on feed-visible book/trade evidence (SC-004; quickstart Scenario C); skip or stub if Specs 2+5 packages are not yet present
+- [ ] T030 [P] [US3] Add `TestFeedbackLoop` in `internal/strategy/loop_test.go` using an in-process fake Spec 5 feed + `IngressRecorder` (and optional fake book-depth follow-on) that asserts feed → decision → ingress → follow-on feed-visible evidence (SC-004; quickstart Scenario C). Do **not** skip when real Spec 2/5 packages are absent — the fake harness is the required gate; optionally add a second integration test later that wires real packages when they exist.
 - [ ] T031 [P] [US3] Add `TestShutdownCancelsOwnedOrders` in `internal/strategy/runner_test.go` asserting `shutdown_cancel` emits cancels for remaining owned ids via ingress (US3 acceptance #3)
 
 ### Implementation for User Story 3
@@ -187,7 +190,8 @@
 
 - T002–T003 (Setup docs) in parallel
 - T005–T006, T008–T009 (Foundational) in parallel after T004 where noted
-- T010–T012 (US1 tests) in parallel
+- T008 / T008a fakes in parallel
+- T010–T012 (US1 tests) in parallel (includes T011a)
 - T019–T023 (US2 tests) in parallel
 - T030–T031 (US3 tests) in parallel
 - T039–T042, T044 (Polish) in parallel
