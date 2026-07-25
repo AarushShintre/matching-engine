@@ -19,6 +19,12 @@ market data → decision → order submission → book update → market data ag
 - Documentation, demos, comments, and resume material for this feature MUST
   describe it as a **simulation / system-design demo** (Constitution Principle VI).
 
+## Clarifications
+
+### Session 2026-07-25
+
+- Q: When a last-trade event is caused by a fill against the strategy's own quote, should that trigger a requote? → A: Ignore own-fill last trades for requote triggers; only external (non-owned) last trades trigger cancel/replace.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Quote Around Last Trade from the Feed (Priority: P1)
@@ -74,22 +80,26 @@ are canceled (or no longer resting) and new quotes appear around L2.
 **Acceptance Scenarios**:
 
 1. **Given** active strategy quotes centered on last trade L1, **When** the
-   feed publishes a new last trade L2 that differs from L1 by at least the
-   configured movement threshold, **Then** the strategy cancels the prior
-   bid and ask (via ingestion cancel requests) and submits new quotes around
-   L2.
+   feed publishes a new last trade L2 from non-owned (external) flow that
+   differs from L1 by at least the configured movement threshold, **Then**
+   the strategy cancels the prior bid and ask (via ingestion cancel requests)
+   and submits new quotes around L2.
 2. **Given** a last-trade update that does **not** meet the movement
    threshold, **When** the feed event arrives, **Then** existing quotes remain
    unchanged.
-3. **Given** dynamic spread mode is enabled, **When** a requote occurs,
+3. **Given** a last-trade update attributable only to a fill against a
+   strategy-owned resting order, **When** that trade event arrives, **Then**
+   the strategy does not cancel/replace solely because of that event
+   (FR-013).
+4. **Given** dynamic spread mode is enabled, **When** a requote occurs,
    **Then** the half-spread used is derived from the configured dynamic rule
    (for example, a function of recent trade activity or a bounded range) and
    still produces one bid and one ask around the current last trade.
-4. **Given** a strategy quote is partially or fully filled before a requote,
-   **When** a requote is triggered, **Then** the strategy cancels any remaining
-   resting strategy order it still owns and posts a fresh two-sided quote
-   set for the new reference (it does not attempt to "manage inventory" as a
-   profit feature).
+5. **Given** a strategy quote is partially or fully filled before a requote,
+   **When** a requote is triggered by a qualifying non-owned last-trade move,
+   **Then** the strategy cancels any remaining resting strategy order it still
+   owns and posts a fresh two-sided quote set for the new reference (it does
+   not attempt to "manage inventory" as a profit feature).
 
 ---
 
@@ -116,7 +126,9 @@ strategy-driven book or trade changes.
 2. **Given** an external order that trades against a strategy quote, **When**
    the trade occurs, **Then** a trade event appears on the feed and the
    strategy's subsequent behavior (if any) is driven only by feed-visible
-   information plus its own configuration — not by private book locks.
+   information plus its own configuration — not by private book locks. A
+   last-trade caused by filling a strategy-owned order MUST NOT by itself
+   trigger a cancel/replace requote (see FR-013).
 3. **Given** the strategy is stopped, **When** shutdown completes, **Then** it
    cancels any remaining resting strategy orders it owns (best effort) so the
    book is not left with orphaned demo quotes without an owner process.
@@ -159,6 +171,10 @@ simulation / non-profitability language and shows at least one requote cycle.
 - Strategy quote crosses the opposite side immediately (spread too tight vs
   book): resulting trades are normal engine behavior; strategy does not claim
   this as intentional "edge."
+- Last trade attributable to a fill against a strategy-owned resting order:
+  does not trigger cancel/replace; the strategy waits for a subsequent
+  non-owned last-trade move that meets the movement threshold (avoids
+  own-fill requote thrashing).
 - Multiple strategy instances on the same symbol: out of scope for this
   feature (assume at most one demo strategy per symbol).
 - Dynamic spread producing zero or negative half-spread: rejected by
@@ -183,10 +199,17 @@ simulation / non-profitability language and shows at least one requote cycle.
   through the Spec 2 concurrent ingestion path; the strategy MUST NOT lock,
   mutate, or read the order book via shared memory.
 - **FR-006**: System MUST cancel and replace resting strategy quotes when the
-  last-trade reference moves by at least a configured movement threshold.
+  last-trade reference moves by at least a configured movement threshold,
+  except when the move is attributable only to fills against strategy-owned
+  orders (see FR-013).
 - **FR-007**: System MUST use unique order identifiers for each new strategy
   order and MUST track which resting orders it currently owns for cancel on
   requote or shutdown.
+- **FR-013**: System MUST NOT treat last-trade events caused by fills against
+  strategy-owned resting orders as requote triggers. Requote MUST be driven
+  by last-trade moves from non-owned (external) flow that meet the movement
+  threshold, using feed-visible trade identity plus the strategy's owned-order
+  set to attribute own fills.
 - **FR-008**: System MUST treat strategy fills as ordinary matches; it MUST NOT
   implement inventory-based profitability logic, predictive signals, or
   portfolio optimization as part of this feature.
@@ -233,7 +256,8 @@ simulation / non-profitability language and shows at least one requote cycle.
 - **Reference Price**: Last-trade price from the feed (or seed until first
   trade), used as the center of the quote set.
 - **Strategy Decision**: For a given feed event and configuration, whether to
-  hold, or cancel/replace quotes, and at which prices/sizes.
+  hold, or cancel/replace quotes, and at which prices/sizes. Own-fill last
+  trades are classified as hold for requote purposes (FR-013).
 - **Feedback Loop Evidence**: Ordered observation that a feed event led to
   ingestion activity and a subsequent feed-visible book or trade effect.
 
@@ -246,8 +270,9 @@ simulation / non-profitability language and shows at least one requote cycle.
   configured size within one quote cycle after L is observed (100% of runs in
   a 10-run suite).
 - **SC-002**: When last trade moves from L1 to L2 beyond the movement
-  threshold, prior strategy orders are no longer resting and new quotes around
-  L2 are present after the requote cycle (100% of runs in a 10-run suite).
+  threshold due to non-owned flow, prior strategy orders are no longer resting
+  and new quotes around L2 are present after the requote cycle (100% of runs
+  in a 10-run suite). Own-fill last trades alone MUST NOT produce a requote.
 - **SC-003**: 100% of strategy new-order and cancel requests in the test suite
   enter only through the Spec 2 ingestion path (verified by test instrumentation
   or equivalent ingress accounting — zero direct book mutations by the
