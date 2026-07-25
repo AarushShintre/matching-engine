@@ -26,9 +26,9 @@
 
 **Purpose**: Initialize Spec 6 package layout and module scaffolding
 
-- [ ] T001 Create Go module at repository root (`go.mod`) if missing, and directories `internal/strategy/` and `cmd/strategy-demo/` per `plan.md`
-- [ ] T002 [P] Add package doc comment in `internal/strategy/doc.go` stating Principle VI simulation / non-profitability framing (FR-010, FR-C05)
-- [ ] T003 [P] Add stub README section or `specs/006-market-making-strategy/README.md` with Non-Claims language aligned to `spec.md` (FR-010, SC-005)
+- [x] T001 Create Go module at repository root (`go.mod`) if missing, and directories `internal/strategy/` and `cmd/strategy-demo/` per `plan.md`
+- [x] T002 [P] Add package doc comment in `internal/strategy/doc.go` stating Principle VI simulation / non-profitability framing (FR-010, FR-C05)
+- [x] T003 [P] Add stub README section or `specs/006-market-making-strategy/README.md` with Non-Claims language aligned to `spec.md` (FR-010, SC-005)
 
 ---
 
@@ -38,13 +38,13 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T004 Implement `StrategyConfig` struct + `Validate()` in `internal/strategy/config.go` per `data-model.md` / `contracts/strategy-client.md` (fixed + dynamic fields, movement threshold default 1, reject ≤0 half-spread / inverted bounds / `QuoteSize < 1`)
-- [ ] T005 [P] Define pure decision types (`Decision`, actions, quote intents) and strategy-owned state types (`ReferencePrice`, `QuoteSet`, `OwnedOrder`) in `internal/strategy/types.go` per `data-model.md` and `contracts/strategy-client.md` §4
-- [ ] T006 [P] Define Spec 2 ingress client interface (`SubmitNewLimit`, `SubmitCancel`) and Spec 5 trade/book event consumer types used by the strategy in `internal/strategy/deps.go` (no book mutation APIs; FR-005, FR-C01)
-- [ ] T007 Implement strategy order-ID generator with reserved namespace in `internal/strategy/ids.go` (FR-007; research R5)
-- [ ] T008 [P] Implement `IngressRecorder` fake in `internal/strategy/fakerecorder_test.go` (or `internal/strategy/testing.go` + tests) per `contracts/strategy-client.md` §6 for SC-003 accounting
-- [ ] T008a [P] Add minimal fake Spec 5 trade (and optional book-depth) event source in `internal/strategy/fakefeed_test.go` sufficient for decision/loop tests without `internal/marketdata` (supports SC-004 / T030)
-- [ ] T009 [P] Add config validation unit tests in `internal/strategy/config_test.go` covering invalid half-spread, inverted dynamic bounds, and zero quote size
+- [x] T004 Implement `StrategyConfig` struct + `Validate()` in `internal/strategy/config.go` per `data-model.md` / `contracts/strategy-client.md` (fixed + dynamic fields, movement threshold default 1, reject ≤0 half-spread / inverted bounds / `QuoteSize < 1`)
+- [x] T005 [P] Define pure decision types (`Decision`, actions, quote intents) and strategy-owned state types (`ReferencePrice`, `QuoteSet`, `OwnedOrder`) in `internal/strategy/types.go` per `data-model.md` and `contracts/strategy-client.md` §4
+- [x] T006 [P] Define Spec 2 ingress client interface (`SubmitNewLimit`, `SubmitCancel`) and Spec 5 trade/book event consumer types used by the strategy in `internal/strategy/deps.go` (no book mutation APIs; FR-005, FR-C01)
+- [x] T007 Implement strategy order-ID generator with reserved namespace in `internal/strategy/ids.go` (FR-007; research R5)
+- [x] T008 [P] Implement `IngressRecorder` fake in `internal/strategy/fakerecorder_test.go` (or `internal/strategy/testing.go` + tests) per `contracts/strategy-client.md` §6 for SC-003 accounting
+- [x] T008a [P] Add minimal fake Spec 5 trade (and optional book-depth) event source in `internal/strategy/fakefeed_test.go` sufficient for decision/loop tests without `internal/marketdata` (supports SC-004 / T030)
+- [x] T009 [P] Add config validation unit tests in `internal/strategy/config_test.go` covering invalid half-spread, inverted dynamic bounds, and zero quote size
 
 **Checkpoint**: Foundation ready — user story implementation can now begin
 
@@ -60,20 +60,20 @@
 
 > Write tests FIRST; they MUST FAIL before implementation. Deterministic for fixed feed/config (FR-C02).
 
-- [ ] T010 [P] [US1] Add `TestInitialQuotesFixedSpread` in `internal/strategy/decision_test.go` (or `quotes_test.go`) asserting bid `L−S` / ask `L+S` / size `Q` for fixed mode (SC-001; quickstart Scenario A; run with `-count=10`)
-- [ ] T011 [P] [US1] Add `TestNoQuotesWithoutReference` in `internal/strategy/decision_test.go` asserting hold/no ingress when no last trade and no seed (spec US1 acceptance #2)
-- [ ] T011a [P] [US1] Add `TestDisabledConfigNoQuotes` in `internal/strategy/decision_test.go` asserting `Enabled=false` yields `hold` and zero ingress submits even when a valid last-trade/seed reference exists (data-model StrategyConfiguration)
-- [ ] T012 [P] [US1] Add `TestSeedReferenceUntilFirstTrade` in `internal/strategy/decision_test.go` asserting seed used only until first trade then last-trade takes over (FR-002)
+- [x] T010 [P] [US1] Add `TestInitialQuotesFixedSpread` in `internal/strategy/decision_test.go` (or `quotes_test.go`) asserting bid `L−S` / ask `L+S` / size `Q` for fixed mode (SC-001; quickstart Scenario A; run with `-count=10`)
+- [x] T011 [P] [US1] Add `TestNoQuotesWithoutReference` in `internal/strategy/decision_test.go` asserting hold/no ingress when no last trade and no seed (spec US1 acceptance #2)
+- [x] T011a [P] [US1] Add `TestDisabledConfigNoQuotes` in `internal/strategy/decision_test.go` asserting `Enabled=false` yields `hold` and zero ingress submits even when a valid last-trade/seed reference exists (data-model StrategyConfiguration)
+- [x] T012 [P] [US1] Add `TestSeedReferenceUntilFirstTrade` in `internal/strategy/decision_test.go` asserting seed used only until first trade then last-trade takes over (FR-002)
 
 ### Implementation for User Story 1
 
-- [ ] T013 [P] [US1] Implement fixed half-spread quote price computation in `internal/strategy/quotes.go` (`Bid = L−S`, `Ask = L+S`, size `Q`; FR-003)
-- [ ] T014 [US1] Implement pure `Decide` for `quote_initial` / `hold` / `pause` paths in `internal/strategy/decision.go` given `(config, state, event)` (contracts §4; FR-C02)
-- [ ] T014a [US1] Honor `Enabled=false` in `Decide` / runner startup in `internal/strategy/decision.go` and `internal/strategy/runner.go` (no quote_initial/requote while disabled)
-- [ ] T015 [US1] Implement run-loop skeleton in `internal/strategy/runner.go`: consume Spec 5 trade events for one symbol, apply `Decide`, submit new limits only via ingress interface (FR-001, FR-005, FR-C01, FR-C06)
-- [ ] T016 [US1] Wire owned-order tracking into `QuoteSet` after successful initial submit in `internal/strategy/runner.go` / `internal/strategy/quotes.go` (FR-007)
-- [ ] T017 [US1] Add structured status/log hooks for feed → decision → ingress on initial quote in `internal/strategy/runner.go` (or `internal/strategy/status.go`) (FR-009)
-- [ ] T018 [US1] Confirm `TestInitialQuotesFixedSpread` / related US1 tests pass and ingress recorder shows 100% of submits (SC-001, SC-003)
+- [x] T013 [P] [US1] Implement fixed half-spread quote price computation in `internal/strategy/quotes.go` (`Bid = L−S`, `Ask = L+S`, size `Q`; FR-003)
+- [x] T014 [US1] Implement pure `Decide` for `quote_initial` / `hold` / `pause` paths in `internal/strategy/decision.go` given `(config, state, event)` (contracts §4; FR-C02)
+- [x] T014a [US1] Honor `Enabled=false` in `Decide` / runner startup in `internal/strategy/decision.go` and `internal/strategy/runner.go` (no quote_initial/requote while disabled)
+- [x] T015 [US1] Implement run-loop skeleton in `internal/strategy/runner.go`: consume Spec 5 trade events for one symbol, apply `Decide`, submit new limits only via ingress interface (FR-001, FR-005, FR-C01, FR-C06)
+- [x] T016 [US1] Wire owned-order tracking into `QuoteSet` after successful initial submit in `internal/strategy/runner.go` / `internal/strategy/quotes.go` (FR-007)
+- [x] T017 [US1] Add structured status/log hooks for feed → decision → ingress on initial quote in `internal/strategy/runner.go` (or `internal/strategy/status.go`) (FR-009)
+- [x] T018 [US1] Confirm `TestInitialQuotesFixedSpread` / related US1 tests pass and ingress recorder shows 100% of submits (SC-001, SC-003)
 
 **Checkpoint**: User Story 1 fully functional and testable independently (MVP)
 
@@ -87,20 +87,20 @@
 
 ### Tests for User Story 2 ⚠️
 
-- [ ] T019 [P] [US2] Add `TestRequoteOnThreshold` in `internal/strategy/decision_test.go` for cancel/replace around L2 when `|L2−L1| ≥` threshold (SC-002; quickstart Scenario B; `-count=10`)
-- [ ] T020 [P] [US2] Add `TestHoldBelowMovementThreshold` in `internal/strategy/decision_test.go` asserting no cancel/replace on sub-threshold moves (US2 acceptance #2)
-- [ ] T021 [P] [US2] Add `TestIgnoreOwnFillLastTradeForRequote` in `internal/strategy/decision_test.go` asserting own-fill last trades do not trigger requote (FR-013; SC-002)
-- [ ] T022 [P] [US2] Add `TestDynamicHalfSpread` in `internal/strategy/quotes_test.go` asserting `S_dyn = clamp(base + activity*step, min, max)` per research R3 (FR-004)
-- [ ] T023 [P] [US2] Add `TestRequoteAfterPartialFill` in `internal/strategy/decision_test.go` asserting cancel remaining owned id(s) and fresh two-sided set — no inventory logic (US2 acceptance #5; FR-008)
+- [x] T019 [P] [US2] Add `TestRequoteOnThreshold` in `internal/strategy/decision_test.go` for cancel/replace around L2 when `|L2−L1| ≥` threshold (SC-002; quickstart Scenario B; `-count=10`)
+- [x] T020 [P] [US2] Add `TestHoldBelowMovementThreshold` in `internal/strategy/decision_test.go` asserting no cancel/replace on sub-threshold moves (US2 acceptance #2)
+- [x] T021 [P] [US2] Add `TestIgnoreOwnFillLastTradeForRequote` in `internal/strategy/decision_test.go` asserting own-fill last trades do not trigger requote (FR-013; SC-002)
+- [x] T022 [P] [US2] Add `TestDynamicHalfSpread` in `internal/strategy/quotes_test.go` asserting `S_dyn = clamp(base + activity*step, min, max)` per research R3 (FR-004)
+- [x] T023 [P] [US2] Add `TestRequoteAfterPartialFill` in `internal/strategy/decision_test.go` asserting cancel remaining owned id(s) and fresh two-sided set — no inventory logic (US2 acceptance #5; FR-008)
 
 ### Implementation for User Story 2
 
-- [ ] T024 [P] [US2] Implement dynamic half-spread computation in `internal/strategy/quotes.go` using activity window over trade events (research R3; FR-004)
-- [ ] T025 [US2] Extend `Decide` in `internal/strategy/decision.go` for `requote` vs `hold` using movement threshold and centered-on reference (FR-006)
-- [ ] T026 [US2] Implement own-fill attribution in `internal/strategy/decision.go` (or `internal/strategy/ownership.go`): treat a trade as own-fill when `resting_order_id` or `aggressor_order_id` intersects the owned-order set; such trades MUST yield `hold` for requote (FR-013; contracts §1)
-- [ ] T027 [US2] Implement cancel-then-replace protocol in `internal/strategy/runner.go`: Spec 2 cancels for owned ids, new IDs, fresh bid/ask submits; tolerate cancel-after-fill (research R4; FR-007)
-- [ ] T028 [US2] On ingress reject/duplicate, log and retry with new order id on next quote cycle in `internal/strategy/runner.go` (edge case; no direct book write)
-- [ ] T029 [US2] Confirm US2 deterministic tests pass including own-fill and dynamic-spread cases (SC-002, FR-C02)
+- [x] T024 [P] [US2] Implement dynamic half-spread computation in `internal/strategy/quotes.go` using activity window over trade events (research R3; FR-004)
+- [x] T025 [US2] Extend `Decide` in `internal/strategy/decision.go` for `requote` vs `hold` using movement threshold and centered-on reference (FR-006)
+- [x] T026 [US2] Implement own-fill attribution in `internal/strategy/decision.go` (or `internal/strategy/ownership.go`): treat a trade as own-fill when `resting_order_id` or `aggressor_order_id` intersects the owned-order set; such trades MUST yield `hold` for requote (FR-013; contracts §1)
+- [x] T027 [US2] Implement cancel-then-replace protocol in `internal/strategy/runner.go`: Spec 2 cancels for owned ids, new IDs, fresh bid/ask submits; tolerate cancel-after-fill (research R4; FR-007)
+- [x] T028 [US2] On ingress reject/duplicate, log and retry with new order id on next quote cycle in `internal/strategy/runner.go` (edge case; no direct book write)
+- [x] T029 [US2] Confirm US2 deterministic tests pass including own-fill and dynamic-spread cases (SC-002, FR-C02)
 
 **Checkpoint**: User Stories 1 and 2 both work independently
 
@@ -114,15 +114,15 @@
 
 ### Tests for User Story 3 ⚠️
 
-- [ ] T030 [P] [US3] Add `TestFeedbackLoop` in `internal/strategy/loop_test.go` using an in-process fake Spec 5 feed + `IngressRecorder` (and optional fake book-depth follow-on) that asserts feed → decision → ingress → follow-on feed-visible evidence (SC-004; quickstart Scenario C). Do **not** skip when real Spec 2/5 packages are absent — the fake harness is the required gate; optionally add a second integration test later that wires real packages when they exist.
-- [ ] T031 [P] [US3] Add `TestShutdownCancelsOwnedOrders` in `internal/strategy/runner_test.go` asserting `shutdown_cancel` emits cancels for remaining owned ids via ingress (US3 acceptance #3)
+- [x] T030 [P] [US3] Add `TestFeedbackLoop` in `internal/strategy/loop_test.go` using an in-process fake Spec 5 feed + `IngressRecorder` (and optional fake book-depth follow-on) that asserts feed → decision → ingress → follow-on feed-visible evidence (SC-004; quickstart Scenario C). Do **not** skip when real Spec 2/5 packages are absent — the fake harness is the required gate; optionally add a second integration test later that wires real packages when they exist.
+- [x] T031 [P] [US3] Add `TestShutdownCancelsOwnedOrders` in `internal/strategy/runner_test.go` asserting `shutdown_cancel` emits cancels for remaining owned ids via ingress (US3 acceptance #3)
 
 ### Implementation for User Story 3
 
-- [ ] T032 [US3] Emit/record `FeedbackLoopEvidence` (feed event → decision → ingress ops → optional follow-on feed) via status hooks in `internal/strategy/status.go` (or extend `runner.go`) (FR-009; data-model)
-- [ ] T033 [US3] Implement graceful shutdown path in `internal/strategy/runner.go`: context cancel → `shutdown_cancel` → best-effort Spec 2 cancels → phase `stopped` (US3; data-model state machine)
-- [ ] T034 [US3] Pause quoting on feed gap/reconnect until a valid last-trade reference returns (no invented prices) in `internal/strategy/runner.go` (edge case; research R6)
-- [ ] T035 [US3] Confirm loop/shutdown tests and SC-004 reviewer evidence path (logs or test hooks) work without privileged book access (FR-005, FR-C01)
+- [x] T032 [US3] Emit/record `FeedbackLoopEvidence` (feed event → decision → ingress ops → optional follow-on feed) via status hooks in `internal/strategy/status.go` (or extend `runner.go`) (FR-009; data-model)
+- [x] T033 [US3] Implement graceful shutdown path in `internal/strategy/runner.go`: context cancel → `shutdown_cancel` → best-effort Spec 2 cancels → phase `stopped` (US3; data-model state machine)
+- [x] T034 [US3] Pause quoting on feed gap/reconnect until a valid last-trade reference returns (no invented prices) in `internal/strategy/runner.go` (edge case; research R6)
+- [x] T035 [US3] Confirm loop/shutdown tests and SC-004 reviewer evidence path (logs or test hooks) work without privileged book access (FR-005, FR-C01)
 
 **Checkpoint**: Closed-loop demo path verifiable; Stories 1–3 independently functional
 
@@ -136,12 +136,12 @@
 
 ### Tests for User Story 4 ⚠️
 
-- [ ] T036 [P] [US4] Add `TestDemoNonClaimsBanner` in `cmd/strategy-demo/main_test.go` (or `internal/strategy/status_test.go`) asserting required simulation / not-profitable / not-production language is present (FR-010, SC-005)
+- [x] T036 [P] [US4] Add `TestDemoNonClaimsBanner` in `cmd/strategy-demo/main_test.go` (or `internal/strategy/status_test.go`) asserting required simulation / not-profitable / not-production language is present (FR-010, SC-005)
 
 ### Implementation for User Story 4
 
-- [ ] T037 [US4] Implement `cmd/strategy-demo/main.go` that prints Principle VI non-claims at startup and runs a short scripted or harness-driven quote/requote cycle with console/status output (FR-010, FR-011, SC-006)
-- [ ] T038 [US4] Audit demo strings, package docs, and feature README for zero profitability / alpha / production-trading claims (FR-C05, SC-005)
+- [x] T037 [US4] Implement `cmd/strategy-demo/main.go` that prints Principle VI non-claims at startup and runs a short scripted or harness-driven quote/requote cycle with console/status output (FR-010, FR-011, SC-006)
+- [x] T038 [US4] Audit demo strings, package docs, and feature README for zero profitability / alpha / production-trading claims (FR-C05, SC-005)
 
 **Checkpoint**: Honest framing complete; feature usable without UI
 
@@ -151,12 +151,12 @@
 
 **Purpose**: Docs, constitution compliance, and quickstart validation across stories
 
-- [ ] T039 [P] Align `specs/006-market-making-strategy/quickstart.md` commands with actual test names and `bin/strategy-demo` build path
-- [ ] T040 [P] Confirm Spec 3 matcher deterministic replay tests (if present) still green — this feature must not redefine matching (FR-012, FR-C02 note)
-- [ ] T041 [P] Audit `internal/strategy/` for book-level locks, shared book reads, unjustified third-party deps, and overclaimed strategy language (Principles I, V, VI)
-- [ ] T042 [P] Confirm structured Spec 5 events remain the strategy’s input — no matcher re-architecture (Principle VII, FR-C06)
-- [ ] T043 Run full quickstart validation: `go test ./internal/strategy/...` (including `-count=10` where specified) and `go build -o bin/strategy-demo ./cmd/strategy-demo`
-- [ ] T044 [P] Document that no strategy throughput/latency/trading-performance numbers are published (FR-C03)
+- [x] T039 [P] Align `specs/006-market-making-strategy/quickstart.md` commands with actual test names and `bin/strategy-demo` build path
+- [x] T040 [P] Confirm Spec 3 matcher deterministic replay tests (if present) still green — this feature must not redefine matching (FR-012, FR-C02 note)
+- [x] T041 [P] Audit `internal/strategy/` for book-level locks, shared book reads, unjustified third-party deps, and overclaimed strategy language (Principles I, V, VI)
+- [x] T042 [P] Confirm structured Spec 5 events remain the strategy’s input — no matcher re-architecture (Principle VII, FR-C06)
+- [x] T043 Run full quickstart validation: `go test ./internal/strategy/...` (including `-count=10` where specified) and `go build -o bin/strategy-demo ./cmd/strategy-demo`
+- [x] T044 [P] Document that no strategy throughput/latency/trading-performance numbers are published (FR-C03)
 
 ---
 

@@ -9,29 +9,29 @@ Validation guide for the event-driven demo loop:
 This is a **simulation / system-design demo**, not profitable or production
 trading (Constitution Principle VI).
 
-Prerequisites: Specs 1–2 and 5 implemented enough to run matcher + ingress +
-market-data feed for one symbol. See `contracts/strategy-client.md` and
+Prerequisites: Strategy unit/loop tests use in-process fakes (`IngressRecorder`,
+`FakeFeed`) and do **not** require Specs 1–2/5 packages to be present. Full
+engine wiring is optional later. See `contracts/strategy-client.md` and
 `data-model.md` for shapes.
 
 ---
 
 ## Prerequisites
 
-- Go toolchain matching the repo
-- Working single-symbol matcher with Spec 2 ingress
-- Spec 5 outbound trade (and book-depth) events consumable in-process
-- Strategy package + optional `cmd/strategy-demo` from this feature
+- Go toolchain matching the repo (`go` on PATH)
+- Strategy package under `internal/strategy/` (+ optional `cmd/strategy-demo`)
+- Optional later: Spec 2 ingress + Spec 5 feed packages for real engine wiring
 
 ---
 
 ## Setup
 
-From repository root (package paths may match final layout in `plan.md`):
+From repository root:
 
 ```bash
-# Fetch modules / build (once Go module exists)
 go test ./internal/strategy/...
 go build -o bin/strategy-demo ./cmd/strategy-demo
+./bin/strategy-demo   # prints Principle VI non-claims at startup
 ```
 
 Example fixed-spread config (conceptual; wire via flags or test fixture):
@@ -44,6 +44,9 @@ Example fixed-spread config (conceptual; wire via flags or test fixture):
 | fixed_half_spread | `5` |
 | movement_threshold | `1` |
 | seed_reference | `100` (optional) |
+
+**Note**: This feature publishes **no** strategy throughput, latency, or
+trading-performance numbers (FR-C03).
 
 ---
 
