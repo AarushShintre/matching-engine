@@ -1,0 +1,5 @@
+{
+  "name": "placeholder_same_price_race",
+  "comment": "Fill after Spec 2 ingress works. TODO(spec-3): real concurrent timing + baseline trades.",
+  "ops": []
+}

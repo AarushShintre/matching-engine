@@ -6,12 +6,12 @@ func IsOwnFill(t TradeEvent, owned map[OrderID]OwnedOrder) bool {
 		return false
 	}
 	if t.RestingOrderID != nil {
-		if _, ok := owned[*t.RestingOrderID]; ok {
+		if _, ok := owned[OrderID(*t.RestingOrderID)]; ok {
 			return true
 		}
 	}
 	if t.AggressorOrderID != nil {
-		if _, ok := owned[*t.AggressorOrderID]; ok {
+		if _, ok := owned[OrderID(*t.AggressorOrderID)]; ok {
 			return true
 		}
 	}
@@ -35,13 +35,14 @@ func MarkFilled(owned map[OrderID]OwnedOrder, t TradeEvent) {
 	if owned == nil {
 		return
 	}
-	mark := func(id *OrderID) {
+	mark := func(id *uint64) {
 		if id == nil {
 			return
 		}
-		if o, ok := owned[*id]; ok {
+		oid := OrderID(*id)
+		if o, ok := owned[oid]; ok {
 			o.Status = OwnedFilled
-			owned[*id] = o
+			owned[oid] = o
 		}
 	}
 	mark(t.RestingOrderID)

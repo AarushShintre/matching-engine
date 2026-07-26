@@ -3,6 +3,8 @@ package strategy
 import (
 	"context"
 	"log/slog"
+
+	"github.com/AarushShintre/matching-engine/internal/marketdata"
 )
 
 // Runner consumes feed events and submits via Spec 2 ingress only.
@@ -95,9 +97,9 @@ func (r *Runner) HandleEvent(ev Event) error {
 	// Synthesize follow-on book-depth evidence from successful quote submits (demo harness).
 	if err == nil && (d.Action == ActionQuoteInitial || d.Action == ActionRequote) {
 		for _, o := range d.NewOrders {
-			side := SideBid
+			side := marketdata.SideBid
 			if o.Side == "sell" {
-				side = SideAsk
+				side = marketdata.SideAsk
 			}
 			follow = append(follow, BookDepthEvent{
 				Symbol: o.Symbol, Side: side, Price: o.Price, Quantity: o.Quantity,

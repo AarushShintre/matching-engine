@@ -1,8 +1,5 @@
 package strategy
 
-// OrderID is a strategy-allocated order identifier.
-type OrderID uint64
-
 // Side is bid or ask for owned tracking.
 type Side string
 

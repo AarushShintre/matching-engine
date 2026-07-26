@@ -2,9 +2,9 @@ package book
 
 import "time"
 
-// Submit matches an incoming limit against the opposite side by price-time
-// priority, then rests any unfilled remainder.
-func (book *Book) Submit(order Order) (trades []Trade) {
+// matchLimit is the existing price-time matching loop for limits.
+// Prefer SubmitLimit as the public endpoint.
+func (book *Book) matchLimit(order Order) (trades []Trade) {
 	if order.Side == Buy {
 		for order.Quantity > 0 &&
 			len(book.AskPrices) > 0 &&
@@ -20,10 +20,10 @@ func (book *Book) Submit(order Order) (trades []Trade) {
 			}
 
 			trades = append(trades, Trade{
-				BuyOrderID:  order.ID,
-				SellOrderID: resting.ID,
-				Price:       bestPrice,
-				Quantity:    qty,
+				MakerID:  resting.ID,
+				TakerID:  order.ID,
+				Price:    bestPrice,
+				Quantity: qty,
 			})
 
 			order.Quantity -= qty
@@ -51,10 +51,10 @@ func (book *Book) Submit(order Order) (trades []Trade) {
 			}
 
 			trades = append(trades, Trade{
-				BuyOrderID:  resting.ID,
-				SellOrderID: order.ID,
-				Price:       bestPrice,
-				Quantity:    qty,
+				MakerID:  resting.ID,
+				TakerID:  order.ID,
+				Price:    bestPrice,
+				Quantity: qty,
 			})
 
 			order.Quantity -= qty

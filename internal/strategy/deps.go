@@ -1,38 +1,24 @@
 package strategy
 
-// TradeEvent is a Spec 5 trade consumed by the strategy (in-process contract).
-type TradeEvent struct {
-	Symbol            string
-	Price             int
-	Quantity          int
-	RestingOrderID    *OrderID
-	AggressorOrderID  *OrderID
-}
+import (
+	"github.com/AarushShintre/matching-engine/internal/ingest"
+	"github.com/AarushShintre/matching-engine/internal/marketdata"
+)
 
-// BookDepthEvent is a Spec 5 book-depth event (optional for quoting; used in evidence).
-type BookDepthEvent struct {
-	Symbol   string
-	Side     Side
-	Price    int
-	Quantity int
-}
+// Canonical Spec 2 / Spec 5 types (owned by ingest + marketdata packages).
+type (
+	OrderID        = ingest.OrderID
+	NewLimitOrder  = ingest.NewLimitOrder
+	CancelOrder    = ingest.CancelOrder
+	TradeEvent     = marketdata.TradeEvent
+	BookDepthEvent = marketdata.BookDepthEvent
+)
 
-// NewLimitOrder is a Spec 2 new-limit ingress operation.
-type NewLimitOrder struct {
-	Symbol   string
-	OrderID  OrderID
-	Side     string // "buy" | "sell"
-	Price    int
-	Quantity int
-}
-
-// CancelOrder is a Spec 2 cancel ingress operation.
-type CancelOrder struct {
-	Symbol  string
-	OrderID OrderID
-}
-
-// Ingress is the Spec 2 client surface. Strategy MUST NOT mutate the book directly.
+// Ingress is the Spec 2 client surface used by the strategy.
+// Strategy MUST NOT mutate the book directly.
+//
+// Narrower than ingest.Client (error-only, no market submit): wrap an
+// ingest.Client adapter when the engine is live, or use test fakes.
 type Ingress interface {
 	SubmitNewLimit(o NewLimitOrder) error
 	SubmitCancel(o CancelOrder) error

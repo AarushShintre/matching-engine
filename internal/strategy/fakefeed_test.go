@@ -19,7 +19,7 @@ func Trade(symbol string, price, qty int) TradeEvent {
 }
 
 func OwnFillTrade(symbol string, price, qty int, resting OrderID) TradeEvent {
-	id := resting
+	id := uint64(resting)
 	return TradeEvent{
 		Symbol: symbol, Price: price, Quantity: qty,
 		RestingOrderID: &id,
