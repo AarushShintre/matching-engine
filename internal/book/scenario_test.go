@@ -126,7 +126,7 @@ func TestScenarios(t *testing.T) {
 		},
 		{
 			name:     "cancel_before_match",
-			needTODO: "TODO(spec-1): Cancel",
+			// needTODO: "TODO(spec-1): Cancel",
 			ops: []scenarioOp{
 				{name: "limit", limit: LimitOrder{ID: 1, Side: Sell, Price: 100, Quantity: 10}},
 				{name: "cancel", cancelID: 1},
@@ -139,7 +139,7 @@ func TestScenarios(t *testing.T) {
 		},
 		{
 			name:     "cancel_mid_queue",
-			needTODO: "TODO(spec-1): Cancel",
+			// needTODO: "TODO(spec-1): Cancel",
 			ops: []scenarioOp{
 				{name: "limit", limit: LimitOrder{ID: 1, Side: Sell, Price: 100, Quantity: 1}},
 				{name: "limit", limit: LimitOrder{ID: 2, Side: Sell, Price: 100, Quantity: 1}},

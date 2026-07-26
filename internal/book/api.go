@@ -1,5 +1,6 @@
 package book
 
+import "slices"
 // SubmitLimit matches a limit against the opposite side, then rests any remainder.
 //
 // TODO(spec-1): reject non-positive price/qty and duplicate order ids (FR-012)
@@ -30,12 +31,41 @@ func (b *Book) SubmitMarket(o MarketOrder) (Result, error) {
 }
 
 // Cancel removes a resting order by id (FR-011).
-//
-// TODO(spec-1): locate id in bid/ask FIFO queues, remove it, drop empty price levels;
+// TODO(spec-1): locate id in bid/ask FIFO queues, remove it, drop empty price levels; 
 // unknown/inactive id → Accepted=false (book unchanged), not an error.
 func (b *Book) Cancel(orderID int) (Result, error) {
-	_ = orderID
-	return Result{}, ErrNotImplemented
+	// walk through the each price level, and each order at that price level 
+	// if order ID found, you can delete the order from that price level
+	// if the price level has no other order, you can delete the price level from the book
+
+	for i, price := range b.BidPrices{
+		lvl := b.Bids[price]
+		for j, order := range lvl.Orders{
+			if order.ID == orderID {
+				lvl.Orders = slices.Delete(lvl.Orders, j, j+1)
+				if len(lvl.Orders) == 0 {
+					delete(b.Bids, price)
+					b.BidPrices = slices.Delete(b.BidPrices, i, i+1)
+				}
+				return Result{Accepted: true}, nil
+			}
+		}
+	}
+	for i, price := range b.AskPrices{
+		lvl := b.Asks[price]
+		for j, order := range lvl.Orders{
+			if order.ID == orderID {
+				lvl.Orders = slices.Delete(lvl.Orders, j, j+1)
+				if len(lvl.Orders) == 0 {
+					delete(b.Asks, price)
+					b.AskPrices = slices.Delete(b.AskPrices, i, i+1)
+				}
+				return Result{Accepted: true}, nil
+			}
+		}
+	}
+
+	return Result{Accepted: false}, nil
 }
 
 // Snapshot returns price levels and FIFO order for harness checks (FR-014).
