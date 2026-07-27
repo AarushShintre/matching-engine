@@ -154,7 +154,7 @@ func TestScenarios(t *testing.T) {
 		},
 		{
 			name:     "reject_invalid_qty",
-			needTODO: "TODO(spec-1): SubmitLimit validation (FR-012)",
+			//needTODO: "TODO(spec-1): SubmitLimit validation (FR-012)",
 			ops: []scenarioOp{
 				{name: "limit", limit: LimitOrder{ID: 1, Side: Buy, Price: 100, Quantity: 0}},
 			},
