@@ -29,10 +29,14 @@ Some important terms/ rules:
 
 Why Go?
 A few reasons Go was a good fit for this project:
+
 Concurrency that matches the problem. The heart of a matching engine is one simple rule: only one process should ever touch the order book at a time. Go's goroutines and channels make that rule easy to enforce by design — a single goroutine owns the book, and everything else talks to it through channels instead of fighting over locks. The safety comes from the structure of the code, not from careful discipline.
+
 Predictable, repeatable behavior. Go doesn't have hidden async magic or surprise scheduling behavior, which makes it much easier to guarantee that running the same sequence of orders through the engine twice gives you the same result every time. That predictability matters for testing and for trusting the system's output.
+
 Fast enough, simple enough. Go won't match C++ or Rust on raw speed, but it's plenty fast for realistic order-book throughput, and it stays easy to read and reason about. That tradeoff — slightly less raw performance for a lot more clarity — was the right one here.
 Solid tooling for concurrency. Built-in race detection, benchmarking, and lightweight goroutines made it straightforward to write tests that actually exercise concurrent behavior instead of faking it.
+
 Easy to follow. Go has a small, clear syntax with no hidden control flow or macros, so anyone reading the code can trace exactly what happens to an order step by step.
 
 ## Principles (constitution)
