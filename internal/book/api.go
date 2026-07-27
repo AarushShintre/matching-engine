@@ -22,12 +22,72 @@ func (b *Book) SubmitLimit(o LimitOrder) (Result, error) {
 	return Result{Accepted: true, Trades: trades, Remaining: rem}, nil
 }
 
-// SubmitMarket matches a market order; unfilled qty must not rest (FR-010).
-//
-// TODO(spec-1): market matching, walk opposite book, discard unfilled remainder (no rest).
+// SubmitMarket matches a market order against available opposite liquidity.
+// Unfilled quantity is discarded and must not rest (FR-010).
 func (b *Book) SubmitMarket(o MarketOrder) (Result, error) {
-	_ = o
-	return Result{}, ErrNotImplemented
+	qtyLeft := o.Quantity
+	var trades []Trade
+
+	if o.Side == Buy {
+		for qtyLeft > 0 && len(b.AskPrices) > 0 {
+			bestPrice := b.AskPrices[0]
+			level := b.Asks[bestPrice]
+			resting := level.front()
+
+			fill := qtyLeft
+			if resting.Quantity < fill {
+				fill = resting.Quantity
+			}
+
+			trades = append(trades, Trade{
+				MakerID:  resting.ID,
+				TakerID:  o.ID,
+				Price:    bestPrice,
+				Quantity: fill,
+			})
+
+			qtyLeft -= fill
+			resting.Quantity -= fill
+
+			if resting.Quantity == 0 {
+				level.popFront()
+			}
+			if level.empty() {
+				b.removeAskLevel(bestPrice)
+			}
+		}
+	} else {
+		for qtyLeft > 0 && len(b.BidPrices) > 0 {
+			bestPrice := b.BidPrices[0]
+			level := b.Bids[bestPrice]
+			resting := level.front()
+
+			fill := qtyLeft
+			if resting.Quantity < fill {
+				fill = resting.Quantity
+			}
+
+			trades = append(trades, Trade{
+				MakerID:  resting.ID,
+				TakerID:  o.ID,
+				Price:    bestPrice,
+				Quantity: fill,
+			})
+
+			qtyLeft -= fill
+			resting.Quantity -= fill
+
+			if resting.Quantity == 0 {
+				level.popFront()
+			}
+			if level.empty() {
+				b.removeBidLevel(bestPrice)
+			}
+		}
+	}
+
+	// qtyLeft (if any) is discarded — market orders do not rest.
+	return Result{Accepted: true, Trades: trades, Remaining: 0}, nil
 }
 
 // Cancel removes a resting order by id (FR-011).
@@ -67,10 +127,9 @@ func (b *Book) Cancel(orderID int) (Result, error) {
 
 	return Result{Accepted: false}, nil
 }
-
 // Snapshot returns price levels and FIFO order for harness checks (FR-014).
 //
-// TODO(spec-1): ensure stable ordering and quantities match post-op book state
+// TODO(spec-1): DONE ensure stable ordering and quantities match post-op book state
 // for every scenario (including empty levels omitted).
 func (b *Book) Snapshot() BookSnapshot {
 	out := BookSnapshot{}

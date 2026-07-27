@@ -103,7 +103,7 @@ func TestScenarios(t *testing.T) {
 		},
 		{
 			name:     "market_against_liquidity",
-			needTODO: "TODO(spec-1): SubmitMarket",
+			// needTODO: "TODO(spec-1): SubmitMarket",
 			ops: []scenarioOp{
 				{name: "limit", limit: LimitOrder{ID: 1, Side: Sell, Price: 100, Quantity: 10}},
 				{name: "market", market: MarketOrder{ID: 2, Side: Buy, Quantity: 10}},
@@ -114,7 +114,7 @@ func TestScenarios(t *testing.T) {
 		},
 		{
 			name:     "market_thin_book_discards_remainder",
-			needTODO: "TODO(spec-1): SubmitMarket",
+			// needTODO: "TODO(spec-1): SubmitMarket",
 			ops: []scenarioOp{
 				{name: "limit", limit: LimitOrder{ID: 1, Side: Sell, Price: 100, Quantity: 3}},
 				{name: "market", market: MarketOrder{ID: 2, Side: Buy, Quantity: 10}},
