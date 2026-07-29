@@ -75,10 +75,6 @@ specs/            # Feature specs 001–006
 | 005 | Market data feed | `internal/marketdata` |
 | 006 | Market-making strategy (simulation) | `internal/strategy` |
 
-Specs 1–5 currently ship as a **harness**: clean public APIs, scenario/bench shells, and `TODO(spec-N)` markers for the remaining logic. Spec 6 is implemented as a simulation client.
-
-Search the codebase for `TODO(spec-` to find fill-in points.
-
 ## Build & test
 
 Requires Go (see `go.mod`).
@@ -94,8 +90,6 @@ Benchmarks (after Spec 4 is filled in):
 ```bash
 go test ./internal/bench -bench=BenchmarkConcurrentIngress -benchmem
 ```
-
-Record results in [`internal/bench/RESULTS.md`](internal/bench/RESULTS.md) before citing any numbers.
 
 ## Performance
 
