@@ -2,8 +2,6 @@
 
 In-memory matching engine in Go: price-time priority order book, channel-based single-writer concurrency, deterministic replay, and a simulation market-making client that exercises the market-data → decision → ingress feedback loop.
 
-This is a systems-design / interview-defendable project — not a production exchange, and not a profitable trading system.
-
 ## Foreword
 
 This project uses GitHub's Spec Kit to scaffold testing and deployment infrastructure, while I wrote all critical trade-execution logic by hand. Spec-Driven Development with the Cursor agent sped up setup of the routine testing harness and model scaffolding, letting me focus on the matching logic itself.
