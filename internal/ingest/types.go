@@ -30,7 +30,7 @@ type CancelOrder struct {
 
 // Outcome is what a client observes without reading book memory (FR-007).
 type Outcome struct {
-	Accepted bool
-	Trades   []book.Trade
+	Accepted  bool
+	Trades    []book.Trade
 	Remaining int
 }
