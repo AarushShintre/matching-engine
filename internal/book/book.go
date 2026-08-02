@@ -65,10 +65,17 @@ func (b *Book) rest(order *Order) {
 
 func (b *Book) removeAskLevel(price int) {
 	delete(b.Asks, price)
-	b.AskPrices = b.AskPrices[1:]
+	i := sort.SearchInts(b.AskPrices, price)
+	if i < len(b.AskPrices) && b.AskPrices[i] == price {
+		b.AskPrices = append(b.AskPrices[:i], b.AskPrices[i+1:]...)
+	}
 }
+
 
 func (b *Book) removeBidLevel(price int) {
 	delete(b.Bids, price)
-	b.BidPrices = b.BidPrices[1:]
+	i := sort.SearchInts(b.BidPrices, price)
+	if i < len(b.BidPrices) && b.BidPrices[i] == price {
+		b.BidPrices = append(b.BidPrices[:i], b.BidPrices[i+1:]...)
+	}
 }
