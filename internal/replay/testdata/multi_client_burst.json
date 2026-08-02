@@ -1,0 +1,31 @@
+{
+  "name": "multi_client_burst_into_non_empty_book",
+  "symbol": "TEST",
+  "ops": [
+    {
+      "sequence": 0,
+      "delay_ns": 0,
+      "limit": {"Symbol": "TEST", "OrderID": 20, "Side": "sell", "Price": 100, "Quantity": 2}
+    },
+    {
+      "sequence": 1,
+      "delay_ns": 0,
+      "limit": {"Symbol": "TEST", "OrderID": 21, "Side": "sell", "Price": 101, "Quantity": 2}
+    },
+    {
+      "sequence": 2,
+      "delay_ns": 5,
+      "limit": {"Symbol": "TEST", "OrderID": 30, "Side": "buy", "Price": 101, "Quantity": 3}
+    },
+    {
+      "sequence": 3,
+      "delay_ns": 5,
+      "market": {"Symbol": "TEST", "OrderID": 31, "Side": "buy", "Quantity": 2}
+    }
+  ],
+  "baseline": [
+    {"Quantity": 2, "Price": 100, "MakerID": 20, "TakerID": 30},
+    {"Quantity": 1, "Price": 101, "MakerID": 21, "TakerID": 30},
+    {"Quantity": 1, "Price": 101, "MakerID": 21, "TakerID": 31}
+  ]
+}

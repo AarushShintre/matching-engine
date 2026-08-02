@@ -82,6 +82,7 @@ Requires Go (see `go.mod`).
 ```bash
 go test ./...
 go test ./internal/book/ -v          # Spec 1 scenario harness
+go test ./internal/replay/ -v        # Spec 3: 100 replays per catalog scenario
 go run ./cmd/strategy-demo           # Spec 6 simulation demo
 ```
 

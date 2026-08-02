@@ -1,0 +1,25 @@
+{
+  "name": "concurrent_same_price_submits",
+  "symbol": "TEST",
+  "ops": [
+    {
+      "sequence": 0,
+      "delay_ns": 0,
+      "limit": {"Symbol": "TEST", "OrderID": 1, "Side": "sell", "Price": 100, "Quantity": 2}
+    },
+    {
+      "sequence": 1,
+      "delay_ns": 0,
+      "limit": {"Symbol": "TEST", "OrderID": 2, "Side": "sell", "Price": 100, "Quantity": 2}
+    },
+    {
+      "sequence": 2,
+      "delay_ns": 1,
+      "market": {"Symbol": "TEST", "OrderID": 3, "Side": "buy", "Quantity": 3}
+    }
+  ],
+  "baseline": [
+    {"Quantity": 2, "Price": 100, "MakerID": 1, "TakerID": 3},
+    {"Quantity": 1, "Price": 100, "MakerID": 2, "TakerID": 3}
+  ]
+}

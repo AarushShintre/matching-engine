@@ -1,0 +1,22 @@
+{
+  "name": "cancel_racing_cross",
+  "symbol": "TEST",
+  "ops": [
+    {
+      "sequence": 0,
+      "delay_ns": 0,
+      "limit": {"Symbol": "TEST", "OrderID": 10, "Side": "sell", "Price": 100, "Quantity": 1}
+    },
+    {
+      "sequence": 1,
+      "delay_ns": 1,
+      "cancel": {"Symbol": "TEST", "OrderID": 10}
+    },
+    {
+      "sequence": 2,
+      "delay_ns": 1,
+      "limit": {"Symbol": "TEST", "OrderID": 11, "Side": "buy", "Price": 100, "Quantity": 1}
+    }
+  ],
+  "baseline": []
+}

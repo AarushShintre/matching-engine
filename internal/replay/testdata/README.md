@@ -1,8 +1,14 @@
 # Replay fixtures
 
-Placeholder captures for Spec 3 deterministic replay.
+The Spec 3 regression catalog contains three scheduling-sensitive captures:
 
-Fill these after Spec 2 (`internal/ingest`) can apply ops through the single-writer path.
-Each scenario should include operation sequence + concurrent timing metadata and an optional trade baseline.
+- `same_price_race.json` — concurrent same-price submits followed by a market order
+- `cancel_vs_cross.json` — cancel wins the captured order against a crossing limit
+- `multi_client_burst.json` — a same-wave burst walks a seeded multi-level book
 
-See `TODO(spec-3)` in `scenario.go`.
+`delay_ns` groups overlapping calls into replay waves. `sequence` records the
+observed total ingress order within and across waves. Replay launches each wave
+with concurrent goroutines, while sequence gates their handoff to Spec 2 so the
+captured winner order is reproduced deterministically.
+
+Every fixture locks an accepted ordered trade baseline.
