@@ -337,6 +337,10 @@ func (c *client) SubmitCancel(o CancelOrder) (Outcome, error) {
 	return c.submit(op{kind: opCancel, cancel: o})
 }
 
+var replyPool = sync.Pool{
+	New: func() any { return make(chan response, 1) },
+}
+
 func (c *client) submit(request op) (Outcome, error) {
 	switch engineState(c.eng.state.Load()) {
 	case stateNew:
@@ -345,7 +349,16 @@ func (c *client) submit(request op) (Outcome, error) {
 		return Outcome{}, ErrStopped
 	}
 
-	request.reply = make(chan response, 1)
+	reply := replyPool.Get().(chan response)
+	request.reply = reply
+	defer func() {
+		select {
+		case <-reply:
+		default:
+		}
+		replyPool.Put(reply)
+	}()
+
 	select {
 	case c.eng.ingress <- request:
 	case <-c.eng.done:
@@ -353,14 +366,14 @@ func (c *client) submit(request op) (Outcome, error) {
 	}
 
 	select {
-	case reply := <-request.reply:
-		return reply.outcome, reply.err
+	case r := <-reply:
+		return r.outcome, r.err
 	case <-c.eng.done:
 		// If the owner accepted the request, it puts the response in this
 		// buffered channel before it can exit.
 		select {
-		case reply := <-request.reply:
-			return reply.outcome, reply.err
+		case r := <-reply:
+			return r.outcome, r.err
 		default:
 			return Outcome{}, ErrStopped
 		}
