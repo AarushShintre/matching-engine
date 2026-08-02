@@ -1,5 +1,6 @@
 package ingest
 
+// core idea within Spec 2: ingress is a single writer with multiple clients, completely avoids race conditions
 import (
 	"context"
 	"errors"
