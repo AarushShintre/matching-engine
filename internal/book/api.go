@@ -9,8 +9,8 @@ import (
 // TODO(spec-1): DONE reject non-positive price/qty and duplicate order ids (FR-012)
 // without mutating the book; return ErrRejected.
 func (b *Book) SubmitLimit(o LimitOrder) (Result, error) {
-	// TODO(spec-5): after this op, emit trade + book-depth events from the matcher owner
-	// (not from clients). Hook lives in ingest once Spec 2 owns the writer.
+	// Spec 5 trade and depth events are emitted by the ingest matcher owner,
+	// after this operation returns; the book remains consumer-independent.
 	if o.Price <= 0 || o.Quantity <= 0 {
 		return Result{Accepted: false}, nil
 	}

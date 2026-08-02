@@ -86,15 +86,18 @@ go test ./internal/replay/ -v        # Spec 3: 100 replays per catalog scenario
 go run ./cmd/strategy-demo           # Spec 6 simulation demo
 ```
 
-Benchmarks (after Spec 4 is filled in):
+Benchmark:
 
 ```bash
-go test ./internal/bench -bench=BenchmarkConcurrentIngress -benchmem
+go test ./internal/bench -run '^$' -bench '^BenchmarkConcurrentIngress$' \
+  -benchmem -benchtime=3s -count=3
 ```
 
 ## Performance
 
-No throughput or latency figures are published yet. Per Principle III, do not invent or copy unverified numbers into this README, commits, or resume material.
+On an Apple M3 Pro with Go 1.26.5, the 2026-08-01 three-run benchmark recorded a representative **638,084 orders/sec**, **12.750 µs p50**, and **100.208 µs p99** submit-to-outcome latency. The workload uses multiple concurrent producers and cycles through resting limits, matching market orders, and cancels on the real single-writer ingress path.
+
+See [`internal/bench/RESULTS.md`](internal/bench/RESULTS.md) for all runs, environment, command, provenance, and interpretation. Results are machine-dependent.
 
 ## Strategy disclaimer
 

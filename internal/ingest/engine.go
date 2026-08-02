@@ -65,8 +65,7 @@ const (
 type Engine struct {
 	symbol string
 	book   *book.Book
-	// TODO(spec-5): optional marketdata.Bus; emit trade + depth after each applied op
-	bus *marketdata.Bus
+	bus    *marketdata.Bus
 
 	ingress chan op
 	stopCh  chan struct{}
@@ -92,7 +91,7 @@ func NewEngine(symbol string, b *book.Book) *Engine {
 	}
 }
 
-// SetBus attaches a Spec 5 outbound bus (optional until you implement emission).
+// SetBus attaches the optional Spec 5 outbound bus. Call it before Start.
 func (e *Engine) SetBus(bus *marketdata.Bus) {
 	e.bus = bus
 }
@@ -171,22 +170,35 @@ func (e *Engine) processOne(o op) (Outcome, error) {
 		if err := e.validateOperation(o.limit.Symbol, o.limit.Side, o.limit.OrderID); err != nil {
 			return Outcome{}, err
 		}
+		before := e.snapshotForEvents()
 		result, err := e.book.SubmitLimit(book.LimitOrder{
 			ID:       int(o.limit.OrderID),
 			Side:     toBookSide(o.limit.Side),
 			Price:    o.limit.Price,
 			Quantity: o.limit.Quantity,
 		})
+		if e.bus != nil && err == nil && result.Accepted {
+			e.emitMatchEvents(before, result.Trades, toBookSide(o.limit.Side))
+			if result.Remaining > 0 {
+				e.emitDepth(toBookSide(o.limit.Side), o.limit.Price, e.levelDepth(
+					e.book.Snapshot(), toBookSide(o.limit.Side), o.limit.Price,
+				))
+			}
+		}
 		return outcomeFromBook(result), err
 	case opMarket:
 		if err := e.validateOperation(o.market.Symbol, o.market.Side, o.market.OrderID); err != nil {
 			return Outcome{}, err
 		}
+		before := e.snapshotForEvents()
 		result, err := e.book.SubmitMarket(book.MarketOrder{
 			ID:       int(o.market.OrderID),
 			Side:     toBookSide(o.market.Side),
 			Quantity: o.market.Quantity,
 		})
+		if e.bus != nil && err == nil && result.Accepted {
+			e.emitMatchEvents(before, result.Trades, toBookSide(o.market.Side))
+		}
 		return outcomeFromBook(result), err
 	case opCancel:
 		if err := e.validateSymbol(o.cancel.Symbol); err != nil {
@@ -195,11 +207,114 @@ func (e *Engine) processOne(o op) (Outcome, error) {
 		if err := validateOrderID(o.cancel.OrderID); err != nil {
 			return Outcome{}, err
 		}
+		before := e.snapshotForEvents()
+		side, price, found := findOrderLevel(before, int(o.cancel.OrderID))
 		result, err := e.book.Cancel(int(o.cancel.OrderID))
+		if e.bus != nil && err == nil && result.Accepted && found {
+			e.emitDepth(side, price, e.levelDepth(e.book.Snapshot(), side, price))
+		}
 		return outcomeFromBook(result), err
 	default:
 		return Outcome{}, fmt.Errorf("ingest: unknown operation kind %d", o.kind)
 	}
+}
+
+func (e *Engine) snapshotForEvents() book.BookSnapshot {
+	if e.bus == nil {
+		return book.BookSnapshot{}
+	}
+	return e.book.Snapshot()
+}
+
+func (e *Engine) emitMatchEvents(
+	before book.BookSnapshot,
+	trades []book.Trade,
+	aggressorSide book.Side,
+) {
+	if e.bus == nil {
+		return
+	}
+	restingSide := book.Buy
+	if aggressorSide == book.Buy {
+		restingSide = book.Sell
+	}
+	removedByPrice := make(map[int]int)
+	for _, trade := range trades {
+		makerID := uint64(trade.MakerID)
+		takerID := uint64(trade.TakerID)
+		_ = e.bus.Publish(marketdata.Event{
+			Kind: marketdata.KindTrade,
+			Trade: &marketdata.TradeEvent{
+				Symbol:           e.symbol,
+				Price:            trade.Price,
+				Quantity:         trade.Quantity,
+				RestingOrderID:   &makerID,
+				AggressorOrderID: &takerID,
+			},
+		})
+
+		removedByPrice[trade.Price] += trade.Quantity
+		depth := e.levelDepth(before, restingSide, trade.Price) - removedByPrice[trade.Price]
+		e.emitDepth(restingSide, trade.Price, depth)
+	}
+}
+
+func (e *Engine) emitDepth(side book.Side, price, quantity int) {
+	if e.bus == nil {
+		return
+	}
+	_ = e.bus.Publish(marketdata.Event{
+		Kind: marketdata.KindBookDepth,
+		BookDepth: &marketdata.BookDepthEvent{
+			Symbol:   e.symbol,
+			Side:     toMarketDataSide(side),
+			Price:    price,
+			Quantity: quantity,
+		},
+	})
+}
+
+func (e *Engine) levelDepth(snapshot book.BookSnapshot, side book.Side, price int) int {
+	levels := snapshot.Bids
+	if side == book.Sell {
+		levels = snapshot.Asks
+	}
+	for _, level := range levels {
+		if level.Price != price {
+			continue
+		}
+		quantity := 0
+		for _, order := range level.Orders {
+			quantity += order.Quantity
+		}
+		return quantity
+	}
+	return 0
+}
+
+func findOrderLevel(snapshot book.BookSnapshot, id int) (book.Side, int, bool) {
+	for _, level := range snapshot.Bids {
+		for _, order := range level.Orders {
+			if order.ID == id {
+				return book.Buy, level.Price, true
+			}
+		}
+	}
+	for _, level := range snapshot.Asks {
+		for _, order := range level.Orders {
+			if order.ID == id {
+				return book.Sell, level.Price, true
+			}
+		}
+	}
+	return book.Buy, 0, false
+}
+
+func toMarketDataSide(side book.Side) marketdata.Side {
+	if side == book.Buy {
+		return marketdata.SideBid
+	}
+	return marketdata.SideAsk
 }
 
 type client struct {

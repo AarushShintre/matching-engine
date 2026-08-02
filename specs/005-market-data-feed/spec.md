@@ -4,7 +4,7 @@
 
 **Created**: 2026-07-25
 
-**Status**: Draft
+**Status**: Complete
 
 **Input**: User description: "Spec 5 — Market Data Feed. Trade and book-depth events published from the matching goroutine over a channel. At minimum: structured log/consumer of events. Stretch: WebSocket broadcast for a live demo."
 

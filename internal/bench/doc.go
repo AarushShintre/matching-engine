@@ -1,6 +1,6 @@
 package bench
 
-// Package bench hosts Spec 4 performance measurement shells.
+// Package bench hosts the Spec 4 concurrent-ingress performance suite.
 //
-// Constitution Principle III: no throughput/latency numbers may be claimed
-// until a recorded go test -bench run populates RESULTS.md.
+// Constitution Principle III requires throughput and p50/p99 claims to come
+// from a recorded go test -bench run in RESULTS.md.
