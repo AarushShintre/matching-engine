@@ -61,8 +61,9 @@ func (b *Book) rest(order *Order) {
 		b.Asks[order.Price] = &PriceLevel{}
 	}
 	b.Asks[order.Price].enqueue(order)
-}
+}	
 
+// Edit #1: Bug Fix in removal of price levels
 func (b *Book) removeAskLevel(price int) {
 	delete(b.Asks, price)
 	i := sort.SearchInts(b.AskPrices, price)

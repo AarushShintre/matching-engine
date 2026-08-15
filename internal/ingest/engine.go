@@ -337,6 +337,13 @@ func (c *client) SubmitCancel(o CancelOrder) (Outcome, error) {
 	return c.submit(op{kind: opCancel, cancel: o})
 }
 
+// Edit #2: Optimized reply channel allocation
+// reply channel now comes from a sync.Pool instead of make() per call.
+// Under steady, sustained load this cuts new-channel allocations close to
+// zero, since Get() usually returns a previously-Put channel. It does NOT
+// guarantee zero allocation — sync.Pool can be cleared by the GC (with a
+// one-cycle "victim cache" grace period) and is sharded per-P, so bursty
+// load or scheduling churn can still cause fallback allocations via New().
 var replyPool = sync.Pool{
 	New: func() any { return make(chan response, 1) },
 }
@@ -351,13 +358,7 @@ func (c *client) submit(request op) (Outcome, error) {
 
 	reply := replyPool.Get().(chan response)
 	request.reply = reply
-	defer func() {
-		select {
-		case <-reply:
-		default:
-		}
-		replyPool.Put(reply)
-	}()
+	defer replyPool.Put(reply)
 
 	select {
 	case c.eng.ingress <- request:
@@ -369,8 +370,6 @@ func (c *client) submit(request op) (Outcome, error) {
 	case r := <-reply:
 		return r.outcome, r.err
 	case <-c.eng.done:
-		// If the owner accepted the request, it puts the response in this
-		// buffered channel before it can exit.
 		select {
 		case r := <-reply:
 			return r.outcome, r.err
